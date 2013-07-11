@@ -12,16 +12,18 @@ namespace BitemporalVisualization
         public DateTime recordFrom, recordTo;
         public DateTime validFrom, validTo;
 
-        public int transactionId, revisionId;
+        public long transactionId;
+        public HashSet<long> revIds; 
 
-        public Version(int tranId, int revId, DateTime rf, DateTime rt, DateTime vf, DateTime vt)
+        public Version(long tranId, long revId, DateTime rf, DateTime rt, DateTime vf, DateTime vt)
         {
             recordFrom = rf;
             recordTo = rt;
             validFrom = vf;
             validTo = vt;
             transactionId = tranId;
-            revisionId = revId;
+            revIds = new HashSet<long>(); 
+            revIds.Add(revId);
         }
 
         public void Draw(CoordinateTransformer coordinateSystem, BrushProvider brushProvider, Graphics graphicsObj)
@@ -35,11 +37,11 @@ namespace BitemporalVisualization
             if (bounds.Width == 0 || bounds.Height == 0)
                 return;
 
-            var brush = brushProvider.GetBrush(transactionId, revisionId, recordFrom, recordTo, validFrom, validTo, new Rectangle(bounds.Y, bounds.X, bounds.Height, bounds.Width));
+            var brush = brushProvider.GetBrush(transactionId, transactionId, recordFrom, recordTo, validFrom, validTo, new Rectangle(bounds.Y, bounds.X, bounds.Height, bounds.Width));
             var pen = new Pen(Color.Black, 1);
             graphicsObj.FillRectangle(brush, bounds);
             graphicsObj.DrawRectangle(pen, bounds);
-            var text = String.Format("T:{0} / R:{1}", transactionId, revisionId);
+            var text = String.Format("T:{0} / R:{1}", transactionId, String.Join(", ", revIds));
             var font = new Font("Lucida Console", 10f);
             var textBrush = new SolidBrush(Color.Black);
             var height = graphicsObj.MeasureString(text, font).Height;

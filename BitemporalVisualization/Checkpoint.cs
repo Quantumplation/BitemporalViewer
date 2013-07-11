@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -9,20 +11,78 @@ namespace BitemporalVisualization
 {
     public class Checkpoint
     {
-        private Dictionary<int, Version> transactions;
+        private Dictionary<long, Version> transactions;
+
+        public Tuple<Version, Version> MinCorner()
+        {
+            DateTime minValidDateTime = DateTime.MaxValue;
+            DateTime minRecordDateTime = DateTime.MaxValue;
+            Version minRecord = transactions.Values.First();
+            Version minValid = transactions.Values.First();
+            foreach (var ver in transactions)
+            {
+                if (ver.Value.recordFrom < minRecordDateTime && ver.Value.recordFrom != DateTime.MinValue)
+                {
+                    minRecord = ver.Value;
+                    minRecordDateTime = ver.Value.recordFrom;
+                }
+                if (ver.Value.validFrom < minValidDateTime && ver.Value.validFrom != DateTime.MinValue)
+                {
+                    minValid = ver.Value;
+                    minValidDateTime = ver.Value.validFrom;
+                }
+            }
+            return Tuple.Create(minRecord, minValid);
+        }
 
         public Checkpoint()
         {
-            transactions = new Dictionary<int, Version>();
+            transactions = new Dictionary<long, Version>();
 
-            AddVersion(new Version(1, 1, SampleTimes.A, SampleTimes.C, SampleTimes.Start, SampleTimes.End));
-            AddVersion(new Version(2, 1, SampleTimes.C, SampleTimes.E, SampleTimes.B, SampleTimes.C));
-            AddVersion(new Version(3, 2, SampleTimes.C, SampleTimes.D, SampleTimes.C, SampleTimes.End));
-            AddVersion(new Version(6, 2, SampleTimes.D, SampleTimes.F, SampleTimes.C, SampleTimes.D));
-            AddVersion(new Version(7, 1, SampleTimes.D, SampleTimes.End, SampleTimes.D, SampleTimes.End));
-            AddVersion(new Version(4, 1, SampleTimes.E, SampleTimes.End, SampleTimes.B, SampleTimes.B.AddDays(10)));
-            AddVersion(new Version(5, 3, SampleTimes.E, SampleTimes.F, SampleTimes.B.AddDays(10), SampleTimes.C));
-            AddVersion(new Version(8, 4, SampleTimes.F, SampleTimes.End, SampleTimes.B.AddDays(10), SampleTimes.D));
+            var sqlConn = new SqlConnection(ConfigurationManager.AppSettings["dbConnString"]);
+            sqlConn.Open();
+
+            var commandString =
+                "SELECT * FROM Transactions JOIN Revision_Transaction_TC ON Id = TransactionId WHERE Id IN (SELECT Id FROM Transactions T JOIN Revision_Transaction_TC RT ON RT.TransactionId = T.Id JOIN Entity_Status_T ES ON RT.RevisionId = ES.RevisionId WHERE EntityId = {0})";
+
+            var command = sqlConn.CreateCommand();
+            command.CommandText = String.Format(commandString, 33);
+            command.Prepare();
+            var dataReader = command.ExecuteReader();
+
+            Dictionary<long, Version> versions = new Dictionary<long, Version>();
+
+            while(dataReader.Read())
+            {
+                var tranId = dataReader.GetInt64(0);
+                var creator = dataReader.GetInt32(1);
+                var recordFrom = dataReader.GetDateTime(2);
+                var recordTo = dataReader.GetDateTime(3);
+                var validFrom = dataReader.GetDateTime(4);
+                if (validFrom.Year == 1753)
+                    validFrom = DateTime.MinValue;
+                var validTo = dataReader.GetDateTime(5);
+                var revId = dataReader.GetInt64(6);
+                if (!versions.ContainsKey(tranId))
+                {
+                    versions.Add(tranId, new Version(tranId, revId, recordFrom, recordTo, validFrom, validTo));
+                }
+                else
+                {
+                    if (versions[tranId].recordFrom != recordFrom)
+                        throw new Exception();
+                    if (versions[tranId].recordTo != recordTo)
+                        throw new Exception();
+                    if (versions[tranId].validFrom != validFrom)
+                        throw new Exception();
+                    if (versions[tranId].validTo != validTo)
+                        throw new Exception();
+                    versions[tranId].revIds.Add(revId);
+                }
+            }
+
+            foreach (var ver in versions)
+                transactions.Add(ver.Key, ver.Value);
         }
 
         public Version FindVersion(CoordinateTransformer coords, int x, int y)

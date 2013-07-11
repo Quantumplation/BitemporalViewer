@@ -19,9 +19,20 @@ namespace BitemporalVisualization
             InitializeComponent();
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer, true);
             checkpoint = new Checkpoint();
+            var mins = checkpoint.MinCorner();
+            CoordinateTransformer.start = mins.Item1.recordFrom;
+            var tran = new CoordinateTransformer(zoom, offsetX, offsetY);
+            if (mins.Item2.validFrom == DateTime.MinValue)
+            {
+                offsetX = -tran.ValidTimeToX(DateTime.Now);
+            }
+            else
+                offsetX = -tran.ValidTimeToX(mins.Item2.validFrom) + 50;
+            offsetY =  tran.RecordTimeToY(mins.Item1.recordFrom) - 500;
+
         }
 
-        private double zoom = 1;
+        private double zoom = 30495.460961325756;
         private double offsetX = 0;
         private double offsetY = 0;
         private Checkpoint checkpoint;
@@ -29,7 +40,7 @@ namespace BitemporalVisualization
         private int mouseX, mouseY;
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            int tranId = hoverVersion == null ? 0 : hoverVersion.transactionId;
+            long tranId = hoverVersion == null ? 0L : hoverVersion.transactionId;
             var coords = new CoordinateTransformer(zoom, offsetX, offsetY);
             checkpoint.Draw(coords, new BrushProvider(tranId), e.Graphics);
 
@@ -51,7 +62,7 @@ namespace BitemporalVisualization
                     StringBuilder sb = new StringBuilder();
 
                     sb.AppendFormat("Transaction: {0}", hoverVersion.transactionId).AppendLine();
-                    sb.AppendFormat("Revision: {0}", hoverVersion.revisionId).AppendLine();
+                    sb.AppendFormat("Revision: {0}", String.Join(", ", hoverVersion.revIds)).AppendLine();
                     sb.AppendFormat("Record:\n from:\t{0}\n   to:\t{1}", PresentableDate(hoverVersion.recordFrom),
                                     PresentableDate(hoverVersion.recordTo)).AppendLine();
                     sb.AppendFormat("Valid:\n from:\t{0}\n   to:\t{1}", PresentableDate(hoverVersion.validFrom),

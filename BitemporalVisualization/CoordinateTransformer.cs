@@ -15,6 +15,11 @@ namespace BitemporalVisualization
         private double scaleX, scaleY;
         private DateTime originRecord, originValid;
 
+        public static DateTime start;
+        static CoordinateTransformer()
+        {
+        }
+
         public CoordinateTransformer(double z, double oX, double oY)
         {
             zoom = z;
@@ -22,8 +27,8 @@ namespace BitemporalVisualization
             windowHeight = 700;
             offsetX = oX;
             offsetY = oY;
-            originRecord = new DateTime(2012, 1, 1);
-            originValid = new DateTime(2012, 1, 1);
+            originRecord = start;
+            originValid = start;
             originX = -1;
             originY = 500;
             scaleX = (windowWidth * zoom)/(new DateTime(2014, 1, 1).Ticks - originValid.Ticks);
