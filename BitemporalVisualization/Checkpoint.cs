@@ -39,6 +39,8 @@ namespace BitemporalVisualization
         {
             transactions = new Dictionary<long, Version>();
 
+            // If you're working from home, comment this stuff out and just do a series of versions.Add
+            // for test data
             var sqlConn = new SqlConnection(ConfigurationManager.AppSettings["dbConnString"]);
             sqlConn.Open();
 
