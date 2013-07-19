@@ -17,7 +17,6 @@ namespace BitemporalVisualization
         public Form1()
         {
             InitializeComponent();
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer, true);
             checkpoint = new Checkpoint();
             var mins = checkpoint.MinCorner();
             CoordinateTransformer.start = mins.Item1.recordFrom;
@@ -30,6 +29,7 @@ namespace BitemporalVisualization
                 offsetX = -tran.ValidTimeToX(mins.Item2.validFrom) + 50;
             offsetY =  tran.RecordTimeToY(mins.Item1.recordFrom) - 500;
 
+            drawingPanel.Focus();
         }
 
         private double zoom = 30495.460961325756;
@@ -38,19 +38,18 @@ namespace BitemporalVisualization
         private Checkpoint checkpoint;
         private Version hoverVersion;
         private int mouseX, mouseY;
-        private void Form1_Paint(object sender, PaintEventArgs e)
+
+        private void drawingPanel_Paint(object sender, PaintEventArgs e)
         {
             long tranId = hoverVersion == null ? 0L : hoverVersion.transactionId;
             var coords = new CoordinateTransformer(zoom, offsetX, offsetY);
             checkpoint.Draw(coords, new BrushProvider(tranId), e.Graphics);
 
-            e.Graphics.FillRectangle(new SolidBrush(Color.White), 680, 0, 400, 900 );
-            e.Graphics.DrawString(hoverText, new Font("Lucida Console", 10), new SolidBrush(Color.Black), 685, 10);
             var pen = new Pen(new SolidBrush(Color.DarkGray));
-            e.Graphics.DrawLine(pen, mouseX, 0, mouseX, 1000);
-            e.Graphics.DrawLine(pen, 0, mouseY, 1000, mouseY);
+            e.Graphics.DrawLine(pen, mouseX, 0, mouseX, drawingPanel.Height);
+            e.Graphics.DrawLine(pen, 0, mouseY, drawingPanel.Width, mouseY);
             var now = (int)coords.RecordTimeToY(DateTime.Now);
-            e.Graphics.DrawLine(pen, 0, now, 1000, now);
+            e.Graphics.DrawLine(pen, 0, now, drawingPanel.Width, now);
         }
 
         private string hoverText
@@ -97,12 +96,23 @@ namespace BitemporalVisualization
             Refresh();
         }
 
-        private void Form1_MouseMove(object sender, MouseEventArgs e)
+        private Point lastMousePos;
+        private void drawingPanel_MouseMove(object sender, MouseEventArgs e)
         {
+            if (e.Button == MouseButtons.Left)
+            {
+                offsetX += e.X - lastMousePos.X;
+                offsetY += e.Y - lastMousePos.Y;
+            }
+
             hoverVersion = checkpoint.FindVersion(new CoordinateTransformer(zoom, offsetX, offsetY), e.X, e.Y);
             mouseX = e.X;
             mouseY = e.Y;
-            Refresh();
+            splitContainer.Panel1.Refresh();
+            
+            hoveTextLabel.Text = hoverText;
+
+            lastMousePos = e.Location;
         }
 
         private String PresentableDate(DateTime dt)
@@ -112,6 +122,23 @@ namespace BitemporalVisualization
             if (dt == DateTime.MaxValue)
                 return "End of Time";
             return dt.ToString();
+        }
+
+        private void drawingPanel_Click(object sender, EventArgs e)
+        {
+            drawingPanel.Focus();
+        }
+
+        private void drawingPanel_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (e.Delta > 0)
+                zoom /= 0.9;
+            else
+                zoom *= 0.9;
+
+            zoom = Math.Max(1, zoom);
+
+            Refresh();
         }
     }
 }

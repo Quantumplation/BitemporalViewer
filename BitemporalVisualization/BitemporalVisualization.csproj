@@ -49,6 +49,9 @@
     <Compile Include="BrushProvider.cs" />
     <Compile Include="Checkpoint.cs" />
     <Compile Include="CoordinateTransformer.cs" />
+    <Compile Include="DoubleBufferedPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
