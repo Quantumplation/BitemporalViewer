@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -41,15 +42,20 @@ namespace BitemporalVisualization
 
         private void drawingPanel_Paint(object sender, PaintEventArgs e)
         {
+            Draw(e.Graphics);
+        }
+
+        private void Draw(Graphics graphics)
+        {
             long tranId = hoverVersion == null ? 0L : hoverVersion.transactionId;
             var coords = new CoordinateTransformer(zoom, offsetX, offsetY);
-            checkpoint.Draw(coords, new BrushProvider(tranId), e.Graphics);
+            checkpoint.Draw(coords, new BrushProvider(tranId), graphics);
 
             var pen = new Pen(new SolidBrush(Color.DarkGray));
-            e.Graphics.DrawLine(pen, mouseX, 0, mouseX, drawingPanel.Height);
-            e.Graphics.DrawLine(pen, 0, mouseY, drawingPanel.Width, mouseY);
+            graphics.DrawLine(pen, mouseX, 0, mouseX, drawingPanel.Height);
+            graphics.DrawLine(pen, 0, mouseY, drawingPanel.Width, mouseY);
             var now = (int)coords.RecordTimeToY(DateTime.Now);
-            e.Graphics.DrawLine(pen, 0, now, drawingPanel.Width, now);
+            graphics.DrawLine(pen, 0, now, drawingPanel.Width, now);
         }
 
         private string hoverText
@@ -77,23 +83,6 @@ namespace BitemporalVisualization
                 }
                 return "";
             }
-        }
-
-        private void Form1_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Oemplus)
-                zoom /= 0.9f;
-            if (e.KeyCode == Keys.OemMinus)
-                zoom *= 0.9f;
-            if (e.KeyCode == Keys.Up)
-                offsetY += 10f;
-            if (e.KeyCode == Keys.Down)
-                offsetY -= 10f;
-            if (e.KeyCode == Keys.Left)
-                offsetX += 10f;
-            if (e.KeyCode == Keys.Right)
-                offsetX -= 10f;
-            Refresh();
         }
 
         private Point lastMousePos;
@@ -139,6 +128,48 @@ namespace BitemporalVisualization
             zoom = Math.Max(1, zoom);
 
             Refresh();
+        }
+
+        private void drawingPanel_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.S)
+                saveImageDialog.ShowDialog();
+
+            if (e.KeyCode == Keys.Oemplus)
+                zoom /= 0.9f;
+            if (e.KeyCode == Keys.OemMinus)
+                zoom *= 0.9f;
+            if (e.KeyCode == Keys.Up)
+                offsetY += 10f;
+            if (e.KeyCode == Keys.Down)
+                offsetY -= 10f;
+            if (e.KeyCode == Keys.Left)
+                offsetX += 10f;
+            if (e.KeyCode == Keys.Right)
+                offsetX -= 10f;
+            Refresh();
+        }
+
+        private void saveImageDialog_FileOk(object sender, CancelEventArgs e)
+        {
+            SaveImage(saveImageDialog.FileName);
+        }
+
+        private void SaveImage(string filename)
+        {
+            int width = drawingPanel.Width + 301, height = drawingPanel.Height;
+            var bitmap = new Bitmap(width, height);
+
+            var graphics = Graphics.FromImage(bitmap);
+            graphics.Clear(Color.White);
+
+            Draw(graphics);
+
+            graphics.FillRectangle(new SolidBrush(Color.White), width - 300, 0, 300, height);
+            graphics.DrawString(hoverText, new Font("Lucida Console", 10), new SolidBrush(Color.Black), width - 295, 10);
+            graphics.DrawLine(new Pen(Color.Black), width - 300, 0, width - 300, height);
+
+            bitmap.Save(filename, ImageFormat.Png);
         }
     }
 }

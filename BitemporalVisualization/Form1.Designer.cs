@@ -29,8 +29,9 @@
         private void InitializeComponent()
         {
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.drawingPanel = new System.Windows.Forms.DoubleBufferedPanel();
             this.hoveTextLabel = new System.Windows.Forms.Label();
+            this.saveImageDialog = new System.Windows.Forms.SaveFileDialog();
+            this.drawingPanel = new System.Windows.Forms.DoubleBufferedPanel();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
@@ -53,28 +54,40 @@
             // 
             this.splitContainer.Panel2.Controls.Add(this.hoveTextLabel);
             this.splitContainer.Size = new System.Drawing.Size(984, 561);
-            this.splitContainer.SplitterDistance = 800;
+            this.splitContainer.SplitterDistance = 700;
             this.splitContainer.TabIndex = 0;
+            // 
+            // hoveTextLabel
+            // 
+            this.hoveTextLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.hoveTextLabel.Font = new System.Drawing.Font("Lucida Console", 10F);
+            this.hoveTextLabel.Location = new System.Drawing.Point(0, 0);
+            this.hoveTextLabel.Name = "hoveTextLabel";
+            this.hoveTextLabel.Padding = new System.Windows.Forms.Padding(5, 10, 5, 10);
+            this.hoveTextLabel.Size = new System.Drawing.Size(278, 559);
+            this.hoveTextLabel.TabIndex = 0;
+            // 
+            // saveImageDialog
+            // 
+            this.saveImageDialog.CreatePrompt = true;
+            this.saveImageDialog.DefaultExt = "png";
+            this.saveImageDialog.Filter = "PNG Files|*.png";
+            this.saveImageDialog.Title = "Save Image";
+            this.saveImageDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.saveImageDialog_FileOk);
             // 
             // drawingPanel
             // 
+            this.drawingPanel.BackColor = System.Drawing.Color.White;
             this.drawingPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.drawingPanel.Location = new System.Drawing.Point(0, 0);
             this.drawingPanel.Name = "drawingPanel";
-            this.drawingPanel.Size = new System.Drawing.Size(798, 559);
+            this.drawingPanel.Size = new System.Drawing.Size(698, 559);
             this.drawingPanel.TabIndex = 0;
             this.drawingPanel.Click += new System.EventHandler(this.drawingPanel_Click);
             this.drawingPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.drawingPanel_Paint);
             this.drawingPanel.MouseMove += new System.Windows.Forms.MouseEventHandler(this.drawingPanel_MouseMove);
             this.drawingPanel.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.drawingPanel_MouseWheel);
-            // 
-            // hoveTextLabel
-            // 
-            this.hoveTextLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.hoveTextLabel.Location = new System.Drawing.Point(0, 0);
-            this.hoveTextLabel.Name = "hoveTextLabel";
-            this.hoveTextLabel.Size = new System.Drawing.Size(178, 559);
-            this.hoveTextLabel.TabIndex = 0;
+            this.drawingPanel.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.drawingPanel_PreviewKeyDown);
             // 
             // Form1
             // 
@@ -84,7 +97,6 @@
             this.Controls.Add(this.splitContainer);
             this.Name = "Form1";
             this.Text = "Form1";
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
@@ -98,6 +110,7 @@
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.Label hoveTextLabel;
         private System.Windows.Forms.DoubleBufferedPanel drawingPanel;
+        private System.Windows.Forms.SaveFileDialog saveImageDialog;
     }
 }
 
